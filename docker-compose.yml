@@ -1,0 +1,74 @@
+# Development compose. Bind-mounts source, runs Django dev server.
+# Usage: docker compose up --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-studyguild}
+      POSTGRES_USER: ${POSTGRES_USER:-studyguild}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studyguild}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studyguild}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  web:
+    build:
+      context: .
+      target: dev
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DEBUG: "True"
+      SECRET_KEY: dev-insecure-change-me
+      ALLOWED_HOSTS: "*"
+      DATABASE_URL: postgres://${POSTGRES_USER:-studyguild}:${POSTGRES_PASSWORD:-studyguild}@db:5432/${POSTGRES_DB:-studyguild}
+      REDIS_URL: redis://redis:6379/0
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+    volumes:
+      - .:/app
+      - dev_media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build:
+      context: .
+      target: dev
+    command: celery -A config worker -l info
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: dev-insecure-change-me
+      DATABASE_URL: postgres://${POSTGRES_USER:-studyguild}:${POSTGRES_PASSWORD:-studyguild}@db:5432/${POSTGRES_DB:-studyguild}
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+      - dev_media:/app/media
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  pg_data:
+  redis_data:
+  dev_media:
