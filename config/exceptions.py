@@ -6,7 +6,7 @@ Rails API returns:
 """
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
@@ -43,6 +43,9 @@ def custom_exception_handler(exc, context):
 
     if isinstance(exc, NotFound):
         return Response({"error": str(exc.detail)}, status=status.HTTP_404_NOT_FOUND)
+
+    if isinstance(exc, PermissionDenied):
+        return Response({"error": str(exc.detail)}, status=status.HTTP_403_FORBIDDEN)
 
     if isinstance(exc, ValidationError):
         return Response(

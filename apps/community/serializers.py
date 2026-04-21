@@ -52,6 +52,7 @@ class IssueReportSerializer(serializers.ModelSerializer):
     reporter_name = serializers.SerializerMethodField()
     image_count = serializers.SerializerMethodField()
     images = IssueReportImageSerializer(many=True, read_only=True)
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueReport
@@ -67,7 +68,10 @@ class IssueReportSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["reporter_id", "status", "created_at", "updated_at"]
+        read_only_fields = ["reporter_id", "created_at", "updated_at"]
+
+    def get_status(self, obj) -> str:
+        return IssueReport.Status(obj.status).name.lower()
 
     def get_reporter_name(self, obj) -> str:
         return _full_name(obj.reporter) or f"Student #{obj.reporter_id}"

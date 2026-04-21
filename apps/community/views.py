@@ -22,6 +22,19 @@ _STATUS_NAME_TO_VALUE = {
 }
 
 
+def _unwrap(data, prefix: str) -> dict:
+    nested = data.get(prefix)
+    if isinstance(nested, dict):
+        return nested
+    bracket = f"{prefix}["
+    unwrapped = {
+        k[len(bracket):-1]: v
+        for k, v in data.items()
+        if k.startswith(bracket) and k.endswith("]")
+    }
+    return unwrapped if unwrapped else data
+
+
 def _is_admin(user) -> bool:
     return getattr(user, "role", None) == "admin"
 
@@ -157,7 +170,7 @@ class IssueReportViewSet(
         )
 
     def create(self, request, *args, **kwargs):
-        payload = request.data.get("issue_report", request.data)
+        payload = _unwrap(request.data, "issue_report")
         images = request.FILES.getlist("images") or request.FILES.getlist(
             "issue_report[images][]"
         )

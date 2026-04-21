@@ -20,6 +20,20 @@ from .serializers import (
 )
 
 
+def _unwrap(data, prefix: str) -> dict:
+    """Handle both JSON nested ({prefix: {...}}) and multipart bracket (prefix[field]) payloads."""
+    nested = data.get(prefix)
+    if isinstance(nested, dict):
+        return nested
+    bracket = f"{prefix}["
+    unwrapped = {
+        k[len(bracket):-1]: v
+        for k, v in data.items()
+        if k.startswith(bracket) and k.endswith("]")
+    }
+    return unwrapped if unwrapped else data
+
+
 def _issue_tokens(user: User) -> dict:
     refresh = RefreshToken.for_user(user)
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
@@ -34,7 +48,7 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        payload = request.data.get("user") if isinstance(request.data.get("user"), dict) else request.data
+        payload = _unwrap(request.data, "user")
         serializer = RegisterSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -49,7 +63,7 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
-        data = request.data.get("user") if isinstance(request.data.get("user"), dict) else request.data
+        data = _unwrap(request.data, "user")
         email = data.get("email")
         password = data.get("password")
         user = authenticate(request, username=email, password=password)
@@ -84,7 +98,7 @@ class MeView(APIView):
         return Response(user_payload(request.user))
 
     def patch(self, request):
-        data = request.data.get("user") if isinstance(request.data.get("user"), dict) else request.data
+        data = _unwrap(request.data, "user")
         serializer = UpdateMeSerializer(request.user, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()

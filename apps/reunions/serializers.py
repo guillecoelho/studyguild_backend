@@ -72,7 +72,7 @@ class ReunionSerializer(BusinessRulesMixin, serializers.ModelSerializer):
                 "name": _full_name(s),
                 "career": s.career,
                 "description": s.description,
-                "profile_photo_url": None,
+                "profile_photo_url": s.profile_photo.url if s.profile_photo else None,
             }
             for s in obj.students.all()
         ]
