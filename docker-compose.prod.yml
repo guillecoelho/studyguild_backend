@@ -74,6 +74,18 @@ services:
       - db
       - redis
 
+  frontend:
+    build:
+      context: ../studyguild_frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - web
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
