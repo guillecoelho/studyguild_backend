@@ -55,6 +55,22 @@ class ReunionViewSet(viewsets.ModelViewSet):
 
         return qs.order_by("scheduled_for").distinct()
 
+    def create(self, request, *args, **kwargs):
+        payload = request.data.get("reunion", request.data)
+        serializer = self.get_serializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        payload = request.data.get("reunion", request.data)
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=payload, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
     def perform_create(self, serializer):
         serializer.save()
 
