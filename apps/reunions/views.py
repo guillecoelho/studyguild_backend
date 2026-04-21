@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -126,6 +128,11 @@ class ReunionMessageViewSet(
                 exc.message_dict if hasattr(exc, "message_dict") else {"non_field_errors": exc.messages}
             )
         message.save()
-        return Response(
-            self.get_serializer(message).data, status=status.HTTP_201_CREATED
-        )
+        serialized = self.get_serializer(message).data
+        channel_layer = get_channel_layer()
+        if channel_layer is not None:
+            async_to_sync(channel_layer.group_send)(
+                f"reunion_{reunion_id}",
+                {"type": "reunion.message", "message": serialized},
+            )
+        return Response(serialized, status=status.HTTP_201_CREATED)
