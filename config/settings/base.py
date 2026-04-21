@@ -19,6 +19,7 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 DJANGO_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -29,7 +30,6 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "daphne",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
