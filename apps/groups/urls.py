@@ -8,7 +8,7 @@ from .views import (
     StudentGroupViewSet,
 )
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register(r"student_groups", StudentGroupViewSet, basename="student-group")
 router.register(
     r"student_group_invitations",
@@ -17,7 +17,7 @@ router.register(
 )
 
 student_groups_router = nested_routers.NestedSimpleRouter(
-    router, r"student_groups", lookup="student_group"
+    router, r"student_groups", lookup="student_group", trailing_slash=False
 )
 student_groups_router.register(
     r"student_group_invitations",

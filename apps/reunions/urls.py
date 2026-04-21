@@ -4,10 +4,10 @@ from rest_framework_nested import routers as nested_routers
 
 from .views import ReunionMessageViewSet, ReunionViewSet
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register(r"reunions", ReunionViewSet, basename="reunion")
 
-reunions_router = nested_routers.NestedSimpleRouter(router, r"reunions", lookup="reunion")
+reunions_router = nested_routers.NestedSimpleRouter(router, r"reunions", lookup="reunion", trailing_slash=False)
 reunions_router.register(r"reunion_messages", ReunionMessageViewSet, basename="reunion-messages")
 
 urlpatterns = [
